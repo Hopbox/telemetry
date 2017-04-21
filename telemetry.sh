@@ -90,7 +90,7 @@ done
 for i in `iwinfo  | grep ESSID | sed -e 's/ESSID: //' | awk '{print $1}'`
 do
 	int=$i
-	ssid=`echo $i | grep ssid | sed -e 's/.*ssid //'`
+	ssid=`iw $i info | grep ssid | sed -e 's/.*ssid //'`
 	if [ "$ssid" = "" ];then
 		ssid="unknown"
 	fi
