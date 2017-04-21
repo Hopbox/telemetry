@@ -1,0 +1,15 @@
+
+config hopcloud 'credentials'
+	option account 'hopcloud_account_id'
+	option device 'hopcloud_device_key'
+	option slug 'myORGslug'
+	option location 'myDEVICElocation'
+
+config hopcloud 'statistics'
+	option telemetry_host 'my_influxdb_host'
+	option telemetry_port 'my_influxdb_port'
+	list wan 'wan'
+	list wan 'wan2'
+	list ovpn 'ovpntunnel'
+	option ping_destination 'my_ping_destination_to_check_latency'
+
