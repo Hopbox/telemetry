@@ -9,6 +9,12 @@
 # License: GNU General Public License - GPL v3.0 or later
 ####################################################################
 
+# Include network.sh lib
+
+. /lib/functions/network.sh
+
+#
+
 date="$( date +%s )000000000"
 #deviceid,location=$location=`uci show system | grep hostname | cut -d "=" -f 2 | sed -e "s/'//g"`
 deviceid=`uci get system.@system[0].hostname`
@@ -38,8 +44,8 @@ free=`echo "$mem" | grep ^MemFree | awk '{print $2}'`
 $POST_CMD --data-binary "memory,host=$deviceid,location=$location total=$total,free=$free $date"
 
 ## Disk
-total=`df -k | grep rootfs | awk '{print $2}'`
-used=`df -k | grep rootfs | awk '{print $5}' | sed -e 's/%//'`
+total=`df -k | grep /root | awk '{print $2}'`
+used=`df -k | grep /root | awk '{print $5}' | sed -e 's/%//'`
 $POST_CMD --data-binary "disk,host=$deviceid,location=$location total=$total,used=$used $date"
 
 ## Load
@@ -50,6 +56,26 @@ load15=`echo "$load" | awk '{print $3}'`
 proc_run=`echo "$load" | awk '{print $4}' | awk -F '/' '{print $1}'`
 proc_total=`echo "$load" | awk '{print $4}' | awk -F '/' '{print $2}'`
 $POST_CMD --data-binary "load,host=$deviceid,location=$location load1=$load1,load5=$load5,load15=$load15,proc_run=$proc_run,proc_total=$proc_total $date"
+
+## Check WAN Status
+for i in `uci get hopcloud.statistics.wan`
+do
+#        int=`uci get network.$i.ifname`
+	sIP=`network_get_ipaddr ip $i;echo $ip`
+        ping_destination=`uci get hopcloud.destination.$i`
+        if [ "$sIP" == "" ]
+        then
+                continue
+        fi
+        ping=`ping -I $sIP -c3 $ping_destination`
+        res=$?
+        status=0
+        if [ "$res" == 0 ]
+        then
+                status=1
+        fi
+        $POST_CMD --data-binary "wanstatus,host=$deviceid,location=$location,interface=$i status=$status $date"
+	done
 
 ## Check WAN Bandwidth 
 for i in `uci get hopcloud.statistics.wan`
@@ -134,10 +160,11 @@ done
 
 ## Latency & Packet loss
 
-ping_destination=`uci get hopcloud.statistics.ping_destination`
 for i in `uci get hopcloud.statistics.wan`
 do
 	interface=`uci get network.$i.ifname`
+	ping_destination=`uci get hopcloud.destination.$i`
+
 	if [ "$interface" == "" ]
 	then
 		continue
