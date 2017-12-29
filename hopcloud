@@ -1,15 +1,17 @@
 
 config hopcloud 'credentials'
-	option account 'hopcloud_account_id'
-	option device 'hopcloud_device_key'
-	option slug 'myORGslug'
-	option location 'myDEVICElocation'
+        option account 'hopcloud_account_id'
+        option device 'hopcloud_device_key'
+        option slug 'MySlug'
+        option location 'myDeviceLocation'
 
 config hopcloud 'statistics'
-	option telemetry_host 'my_influxdb_host'
-	option telemetry_port 'my_influxdb_port'
-	list wan 'wan'
-	list wan 'wan2'
-	list ovpn 'ovpntunnel'
-	option ping_destination 'my_ping_destination_to_check_latency'
+        option telemetry_host 'telemetry.hopbox.in'
+        option telemetry_port '443'
+        list wan 'wan'
+        list wan 'wan2'
+        list ovpn 'hotunnel'
 
+config ping destination
+        option wan 'hopbox.in'
+        option wan2 'hopbox.in'
