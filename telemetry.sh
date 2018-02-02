@@ -44,8 +44,9 @@ free=`echo "$mem" | grep ^MemFree | awk '{print $2}'`
 $POST_CMD --data-binary "memory,host=$deviceid,location=$location total=$total,free=$free $date"
 
 ## Disk
-total=`df -k | grep /root | awk '{print $2}'`
-used=`df -k | grep /root | awk '{print $5}' | sed -e 's/%//'`
+# Checkif overlayfs else report root usage
+total=`df -k | grep -E 'overlayfs|/root' | tail -1 | awk '{print $2}'`
+used=`df -k | grep -E 'overlayfs|/root' | tail -1 | awk '{print $5}' | sed -e 's/%//'`
 $POST_CMD --data-binary "disk,host=$deviceid,location=$location total=$total,used=$used $date"
 
 ## Load
@@ -67,7 +68,7 @@ do
         then
                 continue
         fi
-        ping=`ping -I $sIP -c3 $ping_destination`
+        ping=`ping -W 5 -I $sIP -c3 $ping_destination`
         res=$?
         status=0
         if [ "$res" == 0 ]
@@ -143,10 +144,10 @@ done
 
 ## Number of Connections
 connections=`cat /proc/net/nf_conntrack`
-tcp=`echo "$connections" | grep ipv4 | grep tcp | wc -l`
-udp=`echo "$connections" | grep ipv4 | grep udp | wc -l`
-icmp=`echo "$connections" | grep ipv4 | grep icmp | wc -l`
-total=`echo "$connections" | grep ipv4 | wc -l`
+tcp=`/usr/sbin/conntrack -L -p tcp | wc -l`
+udp=`/usr/sbin/conntrack -L -p udp | wc -l`
+icmp=`/usr/sbin/conntrack -L -p icmp | wc -l`
+total=`/usr/sbin/conntrack -C`
 $POST_CMD --data-binary "connections,host=$deviceid,location=$location tcp=$tcp,udp=$udp,icmp=$icmp,total=$total $date"
 
 ## OpenVPN tunnel status
@@ -162,16 +163,17 @@ done
 
 for i in `uci get hopcloud.statistics.wan`
 do
-	interface=`uci get network.$i.ifname`
+#	interface=`uci get network.$i.ifname`
+	sIP=`network_get_ipaddr ip $i;echo $ip`
 	ping_destination=`uci get hopcloud.destination.$i`
 
-	if [ "$interface" == "" ]
+	if [ "$sIP" == "" ]
 	then
 		continue
 	fi
-	pingResult=`ping -I $interface -c 10 $ping_destination | tail -2`
+	pingResult=`ping -W 5 -I $sIP -c 10 $ping_destination | tail -2`
 	packet=`echo "$pingResult" |grep "packet loss" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
-	latency=`echo "$pingResult" |grep "round-trip" | cut -d "=" -f 2 | cut -d "/" -f 2`
+	latency=`echo "$pingResult" |grep -E 'rtt|round-trip' | cut -d "=" -f 2 | cut -d "/" -f 2`
 	$POST_CMD --data-binary "ping,host=$deviceid,location=$location,interface=$i,destination=$ping_destination packetloss=$packet,latency=$latency $date"
 done
 
