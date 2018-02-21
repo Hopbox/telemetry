@@ -143,7 +143,6 @@ do
 done
 
 ## Number of Connections
-connections=`cat /proc/net/nf_conntrack`
 tcp=`/usr/sbin/conntrack -L -p tcp | wc -l`
 udp=`/usr/sbin/conntrack -L -p udp | wc -l`
 icmp=`/usr/sbin/conntrack -L -p icmp | wc -l`
