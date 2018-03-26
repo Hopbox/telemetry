@@ -62,7 +62,7 @@ $POST_CMD --data-binary "load,host=$deviceid,location=$location load1=$load1,loa
 for i in `uci get hopcloud.statistics.wan`
 do
 #        int=`uci get network.$i.ifname`
-	sIP=`network_get_ipaddr ip $i;echo $ip`
+		sIP=`network_get_device l3_dev $i;echo $l3_dev`
         ping_destination=`uci get hopcloud.destination.$i`
         if [ "$sIP" == "" ]
         then
@@ -164,7 +164,7 @@ done
 for i in `uci get hopcloud.statistics.wan`
 do
 #	interface=`uci get network.$i.ifname`
-	sIP=`network_get_ipaddr ip $i;echo $ip`
+	sIP=`network_get_device l3_dev $i;echo $l3_dev`
 	ping_destination=`uci get hopcloud.destination.$i`
 
 	if [ "$sIP" == "" ]
