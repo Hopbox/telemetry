@@ -23,7 +23,7 @@ server=`uci get hopcloud.statistics.telemetry_host`
 port=`uci get hopcloud.statistics.telemetry_port`
 slug=`uci get hopcloud.credentials.slug`
 location=`uci get hopcloud.credentials.location`
-POST_CMD="curl -k -i -XPOST https://$server:$port/write?db=$slug"
+POST_CMD="curl --connect-timeout 5 --retry 2 --retry-delay 2 -k -i -XPOST https://$server:$port/write?db=$slug"
 
 ## CPU
 #cpu=`cat /proc/stat | head -n1 | sed 's/cpu //'`
