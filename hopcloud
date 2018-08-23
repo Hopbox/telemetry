@@ -6,7 +6,7 @@ config hopcloud 'credentials'
         option location 'myDeviceLocation'
 
 config hopcloud 'statistics'
-        option telemetry_host 'telemetry.hopbox.in'
+        option telemetry_host 'metrics.hopbox.in'
         option telemetry_port '443'
         list wan 'wan'
         list wan 'wan2'
