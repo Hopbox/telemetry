@@ -16,14 +16,14 @@
 #
 
 date="$( date +%s )000000000"
-#deviceid,location=$location=`uci show system | grep hostname | cut -d "=" -f 2 | sed -e "s/'//g"`
+#deviceid=`uci show system | grep hostname | cut -d "=" -f 2 | sed -e "s/'//g"`
 deviceid=`uci get system.@system[0].hostname`
 
 server=`uci get hopcloud.statistics.telemetry_host`
 port=`uci get hopcloud.statistics.telemetry_port`
 slug=`uci get hopcloud.credentials.slug`
 location=`uci get hopcloud.credentials.location`
-POST_CMD="curl -k -i -XPOST https://$server:$port/write?db=$slug"
+POST_CMD="curl --connect-timeout 5 --retry 2 --retry-delay 2 -k -i -XPOST https://$server:$port/write"
 
 ## CPU
 #cpu=`cat /proc/stat | head -n1 | sed 's/cpu //'`
@@ -35,19 +35,19 @@ idle=`echo $cpu | awk '{print $8}'`
 iowait=`echo $cpu | awk '{print $10}'`
 irq=`echo $cpu | awk '{print $12}'`
 softirq=`echo $cpu | awk '{print $14}'`
-$POST_CMD --data-binary "cpu,host=$deviceid,location=$location user=$user,nice=$nice,system=$system,idle=$idle,iowait=$iowait,irq=$irq,softirq=$softirq $date"
+$POST_CMD --data-binary "cpu,host=$deviceid,slug=$slug,location=$location user=$user,nice=$nice,system=$system,idle=$idle,iowait=$iowait,irq=$irq,softirq=$softirq $date"
 
 ## Memory
 mem=`cat /proc/meminfo`
 total=`echo "$mem" | grep ^MemTotal | awk '{print $2}'`
 free=`echo "$mem" | grep ^MemFree | awk '{print $2}'`
-$POST_CMD --data-binary "memory,host=$deviceid,location=$location total=$total,free=$free $date"
+$POST_CMD --data-binary "memory,host=$deviceid,slug=$slug,location=$location total=$total,free=$free $date"
 
 ## Disk
 # Checkif overlayfs else report root usage
 total=`df -k | grep -E 'overlayfs|/root' | tail -1 | awk '{print $2}'`
 used=`df -k | grep -E 'overlayfs|/root' | tail -1 | awk '{print $5}' | sed -e 's/%//'`
-$POST_CMD --data-binary "disk,host=$deviceid,location=$location total=$total,used=$used $date"
+$POST_CMD --data-binary "disk,host=$deviceid,slug=$slug,location=$location total=$total,used=$used $date"
 
 ## Load
 load=`cat /proc/loadavg`
@@ -56,7 +56,7 @@ load5=`echo "$load" | awk '{print $2}'`
 load15=`echo "$load" | awk '{print $3}'`
 proc_run=`echo "$load" | awk '{print $4}' | awk -F '/' '{print $1}'`
 proc_total=`echo "$load" | awk '{print $4}' | awk -F '/' '{print $2}'`
-$POST_CMD --data-binary "load,host=$deviceid,location=$location load1=$load1,load5=$load5,load15=$load15,proc_run=$proc_run,proc_total=$proc_total $date"
+$POST_CMD --data-binary "load,host=$deviceid,slug=$slug,location=$location load1=$load1,load5=$load5,load15=$load15,proc_run=$proc_run,proc_total=$proc_total $date"
 
 ## Check WAN Status
 for i in `uci get hopcloud.statistics.wan`
@@ -75,7 +75,9 @@ do
         then
                 status=1
         fi
-        $POST_CMD --data-binary "wanstatus,host=$deviceid,location=$location,interface=$i status=$status $date"
+# Get interface alias label
+	int_alias=`uci get hopcloud.alias.$i`
+        $POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
 	done
 
 ## Check WAN Bandwidth 
@@ -93,7 +95,9 @@ do
 		continue
 	fi
 	tx=`cat /sys/class/net/$int/statistics/tx_bytes`
-	$POST_CMD --data-binary "wanbw,host=$deviceid,location=$location,interface=$net rx=$rx,tx=$tx $date"
+# Get interface alias
+	int_alias=`uci get hopcloud.alias.$i`
+	$POST_CMD --data-binary "wanbw,host=$deviceid,slug=$slug,location=$location,interface=$net,intalias=$int_alias rx=$rx,tx=$tx $date"
 done
 
 ## Check OpenVPN Bandwidth
@@ -108,7 +112,7 @@ do
 		continue
 	fi
 	tx=`cat /sys/class/net/$i/statistics/tx_bytes`
-	$POST_CMD --data-binary "ovpnbw,host=$deviceid,location=$location,interface=$i rx=$rx,tx=$tx $date"
+	$POST_CMD --data-binary "ovpnbw,host=$deviceid,slug=$slug,location=$location,interface=$i rx=$rx,tx=$tx $date"
 done
 
 ## Get Wireless data
@@ -137,8 +141,8 @@ do
 	rx=`cat /sys/class/net/$int/statistics/rx_bytes`
 	assoc=`iw $int station dump | grep Station | wc -l`
 
-	$POST_CMD --data-binary "wbw,host=$deviceid,location=$location,interface=$int,ssid=$ssid rx=$rx,tx=$tx $date"
-	$POST_CMD --data-binary "wireless,host=$deviceid,location=$location,interface=$int,ssid=$ssid count=$assoc $date"
+	$POST_CMD --data-binary "wbw,host=$deviceid,slug=$slug,location=$location,interface=$int,ssid=$ssid rx=$rx,tx=$tx $date"
+	$POST_CMD --data-binary "wireless,host=$deviceid,slug=$slug,location=$location,interface=$int,ssid=$ssid count=$assoc $date"
 
 done
 
@@ -147,7 +151,7 @@ tcp=`/usr/sbin/conntrack -L -p tcp | wc -l`
 udp=`/usr/sbin/conntrack -L -p udp | wc -l`
 icmp=`/usr/sbin/conntrack -L -p icmp | wc -l`
 total=`/usr/sbin/conntrack -C`
-$POST_CMD --data-binary "connections,host=$deviceid,location=$location tcp=$tcp,udp=$udp,icmp=$icmp,total=$total $date"
+$POST_CMD --data-binary "connections,host=$deviceid,slug=$slug,location=$location tcp=$tcp,udp=$udp,icmp=$icmp,total=$total $date"
 
 ## OpenVPN tunnel status
 for i in `uci show openvpn | grep status | cut -d "=" -f2 | sed -e "s/'//g"`
@@ -155,7 +159,7 @@ do
 	devq=`uci show openvpn | grep $i | cut -d "=" -f 1 | sed -e 's/status/dev/'`
 	tun=`uci get $devq`
 	count=`grep -v '^[0-9]' $i | grep -v -E 'Common|ROUTING|GLOBAL|CLIENT|Updated|bcast|END' | wc -l`
-	$POST_CMD --data-binary "ovpntunnelscount,host=$deviceid,location=$location,tunnel=$tun count=$count $date"
+	$POST_CMD --data-binary "ovpntunnelscount,host=$deviceid,slug=$slug,location=$location,tunnel=$tun count=$count $date"
 done
 
 ## Latency & Packet loss
@@ -164,6 +168,7 @@ for i in `uci get hopcloud.statistics.wan`
 do
 #	interface=`uci get network.$i.ifname`
 	sIP=`network_get_device l3_dev $i;echo $l3_dev`
+	int_alias=`uci get hopcloud.alias.$i`
 	ping_destination=`uci get hopcloud.destination.$i`
 
 	if [ "$sIP" == "" ]
@@ -173,6 +178,6 @@ do
 	pingResult=`ping -W 5 -I $sIP -c 10 $ping_destination | tail -2`
 	packet=`echo "$pingResult" |grep "packet loss" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
 	latency=`echo "$pingResult" |grep -E 'rtt|round-trip' | cut -d "=" -f 2 | cut -d "/" -f 2`
-	$POST_CMD --data-binary "ping,host=$deviceid,location=$location,interface=$i,destination=$ping_destination packetloss=$packet,latency=$latency $date"
+	$POST_CMD --data-binary "ping,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias,destination=$ping_destination packetloss=$packet,latency=$latency $date"
 done
 
