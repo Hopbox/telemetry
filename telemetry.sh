@@ -75,13 +75,9 @@ do
         then
                 status=1
         fi
-<<<<<<< HEAD
 # Get interface alias label
 	int_alias=`uci get hopcloud.alias.$i`
         $POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
-=======
-        $POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i status=$status $date"
->>>>>>> 171e56d949e7f41430cfdd2f4a29924d86da0935
 	done
 
 ## Check WAN Bandwidth 
@@ -99,13 +95,9 @@ do
 		continue
 	fi
 	tx=`cat /sys/class/net/$int/statistics/tx_bytes`
-<<<<<<< HEAD
 # Get interface alias
 	int_alias=`uci get hopcloud.alias.$i`
 	$POST_CMD --data-binary "wanbw,host=$deviceid,slug=$slug,location=$location,interface=$net,intalias=$int_alias rx=$rx,tx=$tx $date"
-=======
-	$POST_CMD --data-binary "wanbw,host=$deviceid,slug=$slug,location=$location,interface=$net rx=$rx,tx=$tx $date"
->>>>>>> 171e56d949e7f41430cfdd2f4a29924d86da0935
 done
 
 ## Check OpenVPN Bandwidth
@@ -186,10 +178,6 @@ do
 	pingResult=`ping -W 5 -I $sIP -c 10 $ping_destination | tail -2`
 	packet=`echo "$pingResult" |grep "packet loss" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
 	latency=`echo "$pingResult" |grep -E 'rtt|round-trip' | cut -d "=" -f 2 | cut -d "/" -f 2`
-<<<<<<< HEAD
 	$POST_CMD --data-binary "ping,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias,destination=$ping_destination packetloss=$packet,latency=$latency $date"
-=======
-	$POST_CMD --data-binary "ping,host=$deviceid,slug=$slug,location=$location,interface=$i,destination=$ping_destination packetloss=$packet,latency=$latency $date"
->>>>>>> 171e56d949e7f41430cfdd2f4a29924d86da0935
 done
 
