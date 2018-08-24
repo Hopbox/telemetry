@@ -33,9 +33,9 @@ uci set hopcloud.credentials.location=$LOCATION
 uci commit
 uci show hopcloud.credentials
 
-TUNINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route[' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}' | grep tun)
+TUNINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}' | grep tun)
 echo "got tunnels $TUNINTERFACES"
-WANINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route[|tun' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}')
+WANINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route|tun' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}')
 echo "get wanlink $WANINTERFACES"
 
 echo "delete existing interfaces"
