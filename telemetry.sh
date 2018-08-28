@@ -77,7 +77,11 @@ do
         fi
 # Get interface alias label
 	int_alias=`uci get hopcloud.alias.$i`
-        $POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
+	if [ -z $int_alias ]
+	then
+		int_alias=$i
+	fi
+    $POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
 	done
 
 ## Check WAN Bandwidth 
@@ -97,6 +101,11 @@ do
 	tx=`cat /sys/class/net/$int/statistics/tx_bytes`
 # Get interface alias
 	int_alias=`uci get hopcloud.alias.$i`
+	if [ -z $int_alias ]
+	then
+		int_alias=$i
+	fi
+
 	$POST_CMD --data-binary "wanbw,host=$deviceid,slug=$slug,location=$location,interface=$net,intalias=$int_alias rx=$rx,tx=$tx $date"
 done
 
@@ -169,6 +178,11 @@ do
 #	interface=`uci get network.$i.ifname`
 	sIP=`network_get_device l3_dev $i;echo $l3_dev`
 	int_alias=`uci get hopcloud.alias.$i`
+	if [ -z $int_alias ]
+	then
+		int_alias=$i
+	fi
+
 	ping_destination=`uci get hopcloud.destination.$i`
 
 	if [ "$sIP" == "" ]
