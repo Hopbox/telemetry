@@ -22,9 +22,9 @@ cd /etc/config/telemetry
 curl -k -O https://raw.githubusercontent.com/Hopbox/telemetry/master/telemetry.sh
 chmod +x telemetry.sh
 
-echo "* * * * * /etc/config/telemetry/telemetry.sh" >> /etc/crontabs/root
-sort /etc/crontabs/root  | uniq >> /etc/crontabs/root.new
-mv /etc/crontabs/root.new /etc/crontabs/root
+cat /etc/crontabs/root | grep -v telemetry.sh > /tmp/root.new
+echo "* * * * * /bin/nice -n 19 /etc/config/telemetry/telemetry.sh" >> /tmp/root.new
+mv /tmp/root.new /etc/crontabs/root
 
 echo $SLUG
 uci set hopcloud.credentials.slug=$SLUG

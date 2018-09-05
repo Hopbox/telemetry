@@ -58,32 +58,6 @@ proc_run=`echo "$load" | awk '{print $4}' | awk -F '/' '{print $1}'`
 proc_total=`echo "$load" | awk '{print $4}' | awk -F '/' '{print $2}'`
 $POST_CMD --data-binary "load,host=$deviceid,slug=$slug,location=$location load1=$load1,load5=$load5,load15=$load15,proc_run=$proc_run,proc_total=$proc_total $date"
 
-## Check WAN Status
-for i in `uci get hopcloud.statistics.wan`
-do
-#        int=`uci get network.$i.ifname`
-		sIP=`network_get_device l3_dev $i;echo $l3_dev`
-        ping_destination=`uci get hopcloud.destination.$i`
-        if [ "$sIP" == "" ]
-        then
-                continue
-        fi
-        ping=`ping -W 5 -I $sIP -c3 $ping_destination`
-        res=$?
-        status=0
-        if [ "$res" == 0 ]
-        then
-                status=1
-        fi
-# Get interface alias label
-	int_alias=`uci get hopcloud.alias.$i`
-	if [ -z $int_alias ]
-	then
-		int_alias=$i
-	fi
-    $POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
-	done
-
 ## Check WAN Bandwidth 
 for i in `uci get hopcloud.statistics.wan`
 do
@@ -171,7 +145,7 @@ do
 	$POST_CMD --data-binary "ovpntunnelscount,host=$deviceid,slug=$slug,location=$location,tunnel=$tun count=$count $date"
 done
 
-## Latency & Packet loss
+## Latency & Packet loss and WAN Status
 
 for i in `uci get hopcloud.statistics.wan`
 do
@@ -192,6 +166,12 @@ do
 	pingResult=`ping -W 5 -I $sIP -c 10 $ping_destination | tail -2`
 	packet=`echo "$pingResult" |grep "packet loss" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
 	latency=`echo "$pingResult" |grep -E 'rtt|round-trip' | cut -d "=" -f 2 | cut -d "/" -f 2`
+	status=1
+	if [ "$packet" == 100 ]
+	then 
+		status=0
+	fi
+	$POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
 	$POST_CMD --data-binary "ping,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias,destination=$ping_destination packetloss=$packet,latency=$latency $date"
 done
 
