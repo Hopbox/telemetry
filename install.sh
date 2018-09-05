@@ -1,9 +1,23 @@
 #!/bin/sh
-# Store the arguments in variables
-SLUG=$(uci get hopcloud.credentials.slug) # $1
-LOCATION=$(uci get hopcloud.credentials.location) # $2
+
+if [ $# -ne 2 ]
+then
+	echo "$0: Usage: $0 SLUG LOCATION (No space in SLUG or LOCATION strings)"
+	exit 1
+fi
+
+SLUG=$1
+LOCATION=$2
 
 # Decide wheter to use curl or wget .. default is curl
+CURL=`which curl`
+RES=$?
+
+if [ $RES -ne 0 ]
+then
+	echo "curl not found. Exiting."
+	exit 1
+fi
 
 # Get the latest hopcloud version
 if [ -e "/etc/config/hopcloud" ]
@@ -33,9 +47,9 @@ uci set hopcloud.credentials.location=$LOCATION
 uci commit
 uci show hopcloud.credentials
 
-TUNINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}' | grep tun)
+TUNINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route|wf' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}' | grep tun)
 echo "got tunnels $TUNINTERFACES"
-WANINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route|tun' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}')
+WANINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route|tun|wf' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}')
 echo "get wanlink $WANINTERFACES"
 
 echo "delete existing interfaces"
