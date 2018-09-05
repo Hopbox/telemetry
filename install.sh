@@ -44,7 +44,7 @@ echo $SLUG
 uci set hopcloud.credentials.slug=$SLUG
 echo $LOCATION
 uci set hopcloud.credentials.location=$LOCATION
-uci commit
+uci commit hopcloud
 uci show hopcloud.credentials
 
 TUNINTERFACES=$(uci show network | grep interface | grep -v -E 'lan|self|hopcloud|loopback|route|wf' | awk -F'.' '{print $2}' | awk -F'=' '{print $1}' | grep tun)
@@ -66,5 +66,5 @@ do
     echo $tuninterface
     uci add_list hopcloud.statistics.ovpn=$tuninterface
 done
-uci commit
+uci commit hopcloud
 sync
