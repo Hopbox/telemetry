@@ -27,7 +27,7 @@ POST_CMD="curl --connect-timeout 5 --retry 2 --retry-delay 2 -k -i -XPOST https:
 
 ## CPU
 #cpu=`cat /proc/stat | head -n1 | sed 's/cpu //'`
-cpu=`top -b -n 1 | grep CPU | grep irq | sed 's/%//g'`
+cpu=`/bin/busybox top -b -n 1 | grep CPU | grep irq | sed 's/%//g'`
 user=`echo $cpu | awk '{print $2}'`
 nice=`echo $cpu | awk '{print $6}'`
 system=`echo $cpu | awk '{print $4}'`
