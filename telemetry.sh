@@ -170,6 +170,7 @@ do
 	if [ "$packet" == 100 ]
 	then 
 		status=0
+		latency=0
 	fi
 	$POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
 	$POST_CMD --data-binary "ping,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias,destination=$ping_destination packetloss=$packet,latency=$latency $date"
