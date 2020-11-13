@@ -161,6 +161,8 @@ do
 
 	if [ "$sIP" == "" ]
 	then
+	        status=0
+	        $POST_CMD --data-binary "wanstatus,host=$deviceid,slug=$slug,location=$location,interface=$i,intalias=$int_alias status=$status $date"
 		continue
 	fi
 	pingResult=`ping -W 5 -I $sIP -c 10 $ping_destination | tail -2`
