@@ -61,7 +61,7 @@ $POST_CMD --data-binary "load,host=$deviceid,slug=$slug,location=$location load1
 ## Check WAN Bandwidth 
 for i in `uci get hopcloud.statistics.wan`
 do
-	int=`uci get network.$i.ifname`
+        int=`network_get_device l3_dev $i;echo $l3_dev`
 	net=$i
 	echo $int, $net
 	rx=0
