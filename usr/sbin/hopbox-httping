@@ -45,10 +45,17 @@ do
 	then
 
 		httpingResult=`${HTTPING_CMD} $httping_destination | tail -2`
-		httping_loss=`echo "${httpingResult}" |grep "failed" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
 		httping_latency=`echo "${httpingResult}" |grep -E 'rtt|round-trip' | cut -d "=" -f 2 | cut -d "/" -f 2`
 		httping_latency_max=`echo "${httpingResult}" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f 3 | sed -e 's/\ ms//'`
 		httping_latency_min=`echo "${httpingResult}" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f 1 | sed -e 's/\ //'`
+		httping_loss=`echo "${httpingResult}" |grep "failed" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
+
+		if [ "httping_loss" -eq 100 ]
+		then
+			httping_latency=0
+			httping_latency_max=0
+			httping_latency_min=0
+		fi
 
 		date="$( date +%s )000000000"
 		
