@@ -50,7 +50,7 @@ do
 		httping_latency_min=`echo "${httpingResult}" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f 1 | sed -e 's/\ //'`
 		httping_loss=`echo "${httpingResult}" |grep "failed" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
 
-		if [ "httping_loss" -eq 100 ]
+		if [ "${httping_loss}" -eq 100 ]
 		then
 			httping_latency=0
 			httping_latency_max=0
