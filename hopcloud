@@ -13,8 +13,14 @@ config hopcloud 'statistics'
         list ovpn 'hotunnel'
 
 config ping destination
-        option wan 'hopbox.in'
-        option wan2 'hopbox.in'
+        option wan '8.8.8.8'
+        option wan2 '8.8.8.8'
+
+config hopcloud 'httping'
+	option destination 'https://hopbox.in'
+	option count '12'
+	option interval '5'
+	option timeout '1'
 
 config hopcloud 'alias'
 	option wan 'ISP1'

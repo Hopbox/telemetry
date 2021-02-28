@@ -1,0 +1,61 @@
+#!/bin/sh
+#####################################################################
+# (C) Unmukti Technology Pvt Ltd
+# support@hopbox.in
+#
+# This is a free software which comes with absolutely no warranty.
+# Please use at your own risk.
+#
+# License: GNU General Public License - GPL v3.0 or later
+####################################################################
+
+# Include network.sh lib
+
+. /lib/functions/network.sh
+
+#
+
+#deviceid=`uci show system | grep hostname | cut -d "=" -f 2 | sed -e "s/'//g"`
+deviceid=`uci get system.@system[0].hostname`
+
+server=`uci get hopcloud.statistics.telemetry_host`
+port=`uci get hopcloud.statistics.telemetry_port`
+slug=`uci get hopcloud.credentials.slug`
+location=`uci get hopcloud.credentials.location`
+LOG_CMD="/usr/bin/logger -t hopbox-httping"
+POST_CMD="curl --connect-timeout 5 --retry 2 --retry-delay 2 -k -i -XPOST https://${server}:${port}/write"
+
+HTTPING_INTERVAL=`uci get hopcloud.httping.interval`
+HTTPING_COUNT=`uci get hopcloud.httping.count`
+HTTPING_TIMEOUT=`uci get hopcloud.httping.timeout`
+
+HTTPING_CMD="/usr/bin/httping -c ${HTTPING_COUNT} -t ${HTTPING_TIMEOUT} -i ${HTTPING_INTERVAL}  -W"
+
+trap "${LOG_CMD} 'Exiting. Bye-bye...'; trap - SIGTERM && kill -- -$$;exit 0" SIGINT SIGTERM SIGKILL EXIT 
+
+${LOG_CMD} "Starting ${HTTPING_CMD}"
+
+## HTTPING
+while [ true ]
+do
+
+	httping_destination=`uci get hopcloud.httping.destination`
+
+	if [ -n "$httping_destination" ]
+	then
+
+		httpingResult=`${HTTPING_CMD} $httping_destination | tail -2`
+		httping_loss=`echo "${httpingResult}" |grep "failed" | cut -d "," -f 3 | cut -d " " -f 2| sed 's/.$//'`
+		httping_latency=`echo "${httpingResult}" |grep -E 'rtt|round-trip' | cut -d "=" -f 2 | cut -d "/" -f 2`
+		httping_latency_max=`echo "${httpingResult}" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f 3 | sed -e 's/\ ms//'`
+		httping_latency_min=`echo "${httpingResult}" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f 1 | sed -e 's/\ //'`
+
+		date="$( date +%s )000000000"
+		
+		${LOG_CMD} "${date} Destination=${httping_destination} Loss=${httping_loss}% Avg=${httping_latency}ms Min=${httping_latency_min}ms Max=${httping_latency_max}ms"
+
+		$POST_CMD --data-binary "httping,host=${deviceid},slug=${slug},location=${location},httpingdestination=${httping_destination} httpingloss=${httping_loss},httpinglatency=${httping_latency},httpinglatencymax=${httping_latency_max},httpinglatencymin=${httping_latency_min} ${date}"
+
+	fi
+
+done
