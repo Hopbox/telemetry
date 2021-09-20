@@ -141,7 +141,7 @@ for i in `uci show openvpn | grep status | cut -d "=" -f2 | sed -e "s/'//g"`
 do
 	devq=`uci show openvpn | grep $i | cut -d "=" -f 1 | sed -e 's/status/dev/'`
 	tun=`uci get $devq`
-	count=`grep -v '^[0-9]' $i | grep -v -E 'Common|ROUTING|GLOBAL|CLIENT|Updated|bcast|END' | wc -l`
+	count=`grep -v '^[0-9]' $i | grep -v -E 'UNDEF|Common|ROUTING|GLOBAL|CLIENT|Updated|bcast|END' | wc -l`
 	$POST_CMD --data-binary "ovpntunnelscount,host=$deviceid,slug=$slug,location=$location,tunnel=$tun count=$count $date"
 done
 
